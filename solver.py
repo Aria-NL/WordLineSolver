@@ -10,7 +10,6 @@ rightSide = []
 topLetters = []
 bottomLetters = []
 allLetters = []
-turns = 0
 
 # Solver for the New York Times Letter Boxed game
 # Takes 4 lists of three letters each, representing the four sides of the box
@@ -29,8 +28,8 @@ def loadWords():
         dictionary = list(json.load(f).keys())
 
     #print first 10 words in the dictionary
-    for i in range(10):
-        print(dictionary[i])
+    # for i in range(10):
+    #     print(dictionary[i])
     return dictionary
 
 def solve():
@@ -43,7 +42,7 @@ def solve():
     # Get all the possible words
     words = getAllWords(dictionary)
 
-    print(words)
+    # print(words)
 
     # Get all the possible solutions
     solutions = getAllSolutions(words)
@@ -56,7 +55,6 @@ def solve():
     #printSolution(bestSolution)
 
 def getLetters():
-    global turns
     global topLetters
     global rightLetters
     global bottomLetters
@@ -74,9 +72,6 @@ def getLetters():
     leftLetters = input().split()
 
     allLetters = topLetters + rightLetters + bottomLetters + leftLetters
-    print(allLetters)
-    print("Enter the number of words allowed in the solution.")
-    turns = int(input())
 
     if len(allLetters) != 12:
         print("Error: You must enter 12 letters. Ensure you have entered 3 letters for each side.")
@@ -113,12 +108,12 @@ def getAllWords(dictionary):
         for word in dictionary:
             if word.startswith(letter):
                 candidateWords.append(word)
-                print("found candidate " + word)
+                # print("found candidate " + word)
 
     # pick 10 random words from the candidate words and print
-    for i in range(10):
-        randomWord = random.choice(candidateWords)
-        print(randomWord)
+    # for i in range(10):
+    #     randomWord = random.choice(candidateWords)
+    #     print(randomWord)
 
 
     # slowly filter out words that don't meet the criteria
@@ -126,121 +121,72 @@ def getAllWords(dictionary):
     for word in candidateWords:
         if len(word) >= 3:
             passedLengthCheck.append(word)
-        else:
-            print("removed " + word + ", too short")
+        # else:
+            # print("removed " + word + ", too short")
     # iterate through the candidate words letter by letter. if a letter is not in the box, remove the word
     for word in passedLengthCheck:
         isBreak = False
         for letter in word:
             if letter not in allLetters:
-                print("removed " + word + ", letter " + letter + " not in box")
+                # print("removed " + word + ", letter " + letter + " not in box")
                 isBreak = True
                 break
         if isBreak:
             continue
-        print("word " + word + " passed letter check")
+        # print("word " + word + " passed letter check")
         passedWordCheck.append(word)
     # eliminate words that contain the same letter twice consecutively
     for word in passedWordCheck:
         isBreak = False
         for i in range(len(word)-1):
             if word[i] == word[i+1]:
-                print("removed " + word + ", same letter twice consecutively")
+                # print("removed " + word + ", same letter twice consecutively")
                 isBreak = True
                 break
         if isBreak:
             continue
-        print("word " + word + " passed consecutive letter check")
+        # print("word " + word + " passed consecutive letter check")
         passedConsecChecks.append(word)
     # remove words that have two consecutive letters from the same side
     for word in passedConsecChecks:
         isBreak = False
         for i in range(len(word)-1):
             if word[i] in topLetters and word[i+1] in topLetters:
-                print("removed " + word + ", two consecutive letters from the top side")
+                # print("removed " + word + ", two consecutive letters from the top side")
                 isBreak = True
                 break
             if word[i] in rightLetters and word[i+1] in rightLetters:
-                print("removed " + word + ", two consecutive letters from the right side")
+                # print("removed " + word + ", two consecutive letters from the right side")
                 isBreak = True
                 break
             if word[i] in bottomLetters and word[i+1] in bottomLetters:
-                print("removed " + word + ", two consecutive letters from the bottom side")
+                # print("removed " + word + ", two consecutive letters from the bottom side")
                 isBreak = True
                 break
             if word[i] in leftLetters and word[i+1] in leftLetters:
-                print("removed " + word + ", two consecutive letters from the left side")
+                # print("removed " + word + ", two consecutive letters from the left side")
                 isBreak = True
                 break
         if isBreak:
             continue
-        print("word " + word + " passed side check")
+        # print("word " + word + " passed side check")
         passedSideChecks.append(word)
     return passedSideChecks
 
 def getAllSolutions(words):
-    # recursively find all solutions using number of turns.
-    # nth word must begin with the last letter of the (n-1)th word
-    # the first word can begin with any letter from any side
-    def findSolutions(turns, currentWord, usedWords, usedLetters, counter):
-        # Base case: we've used all the words
-        if turns == 0:
-            return [usedWords]
-
-        # Recursive case: try to find the next word
-        solutions = []
-        for word in words:
-            # Check if we've already used this word
-            if word in usedWords:
-                # print(f"Already used word {word}")
-                continue
-
-            # Check if the first letter of this word matches the last letter of the previous word
-            if currentWord is not None and word[0] != currentWord[-1]:
-                # print("First letter of " + word + " does not match last letter of " + currentWord)
-                continue
-
-            # Try using this word
-            newUsedWords = usedWords + [word]
-            newUsedLetters = usedLetters + list(word)
-            newCurrentWord = word
-            newTurns = turns - 1
-
-            # Increment the counter and calculate the percentage of completion
-            counter += 1
-            percent_complete = int(counter / total_iterations * 100)
-
-            # Print the progress indicator
-            print(f"\rProgress: {percent_complete}%. Current beginning word: {usedWords[0]} ({'->'.join(usedWords[1:])})", end="")
-
-            # Recursively find the rest of the solutions
-            solutions += findSolutions(newTurns, newCurrentWord, newUsedWords, newUsedLetters, counter)
-
-        return solutions
-
-    # Calculate the total number of iterations
-    total_iterations = len(allLetters) * (turns - 1) * len(words) ** (turns - 1)
-
-    # Start with all possible first letters
-    solutions = []
-    counter = 0
-    for i, letter in enumerate(allLetters):
-        for j in range(2, turns):
-            # Calculate the current position of the first word in the list of words
-            current_position = i * len(words) + 1
-            # Calculate the percentage of completion based on the current position of the first word
-            percent_complete = int(current_position / (len(allLetters) * len(words)) * 100)
-
-            # Print the progress indicator before starting a new iteration
-            print(f"\rProgress: {percent_complete}%. Current beginning word: {letter} ({'->'.join(['']*j)})", end="")
-
-            solutions += findSolutions(j, letter, [letter], [letter], counter)
-            counter += len(words) ** (j - 1)
-
-    # Print the progress indicator when all iterations are complete
-    print("\rProgress: 100%. Current beginning word: None")
-
-    return solutions
+    validSolutions = []
+    # total_combinations = len(words) * len(words)
+    progress = 0
+    for i in range(len(words)):
+        for j in range(len(words)):
+            if i != j and words[i][-1] == words[j][0]:
+                solution = words[i] + " " + words[j]
+                if solution not in validSolutions and len(solution.split()) == 2:
+                    if all(letter in solution for letter in allLetters):
+                        validSolutions.append(solution)
+                # progress += 1
+                # print(f"Progress: {progress}/{total_combinations} [{progress/total_combinations*100:.2f}%]", end="\r")
+    return validSolutions
 
 
 
